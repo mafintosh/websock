@@ -1,0 +1,22 @@
+<html>
+<head>
+	<title>hello websocket world</title>
+	<script>
+		var ws = new WebSocket('ws://localhost:10000');
+
+		ws.onopen = function() {
+			ws.send('hello world world world world world world world world world world world world world world world world world world world world world world');
+		};
+		ws.onmessage = function(e) {
+			console.log('rcvd', e.data);
+			ws.close();
+		};
+		ws.onclose = function() {
+			console.log('imma closing');
+		};
+	</script>
+</head>
+<body>
+	<h1>gogo console</h1>
+</body>
+</html>
