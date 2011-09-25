@@ -78,8 +78,8 @@ var client8 = function(client, host) {
 		upgrade:'websocket',
 		connection:'upgrade',
 		host:host,
-        'sec-websocket-version':'8',
-        'sec-websocket-key':key
+		'sec-websocket-version':'8',
+		'sec-websocket-key':key
 	});
 
 	var answer = challenge(key);
