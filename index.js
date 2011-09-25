@@ -23,64 +23,100 @@ var sign = function(k1, k2, head) {
 	return md5.update(head.toString('binary')).digest('binary');
 };
 
+var client0 = function(client, host) {
+	var ws = protocol0.create({type:'client'});
+	
+	// TODO: DONT HARDCODE HANDSHAKE!	
+	var request = client.request('/', {
+		upgrade:'websocket',
+		connection:'upgrade',
+		host:host,
+		'sec-websocket-key1':'4 @1  46546xW%0l 1 5',
+		'sec-websocket-key2':'12998 5 Y3 1  .P00'
+	});
+
+	client.on('upgrade', function(request, connection, head) {
+		// TODO: CHECK HANDSHAKE!
+		ws.onconnection(connection);
+	});
+
+	request.end('^n:ds[4U', 'ascii');
+	return ws;
+};
+var handshake0 = function(request, connection, head) {
+	var sec = ('sec-websocket-key1' in request.headers) ? 'Sec-' : '';
+	var token = sign(request.headers['sec-websocket-key1'], request.headers['sec-websocket-key2'], head);
+
+	if (sec && !token) {
+		connection.destroy();
+		return;
+	}
+
+	var handshake = [
+		'HTTP/1.1 101 Web Socket Protocol Handshake', 
+		'Upgrade: WebSocket', 
+		'Connection: Upgrade',
+		sec+'WebSocket-Origin: ' + request.headers.origin || 'null',
+		sec+'WebSocket-Location: ws://' + request.headers.host + request.url
+	];
+
+	connection.write(handshake.join('\r\n')+'\r\n\r\n'+token, 'binary');
+	return protocol0.create({type:'server'});
+};
+
+var client8 = function(client, host) {
+	var ws = protocol8.create({mask:true, type:'client'});
+	var key = new Buffer(16);
+
+	for (var i = 0; i < key.length; i++) {
+		key[i] = (Math.random()*0xff) | 0;		
+	}
+
+	key = key.toString('base64');
+	
+	var request = client.request('/', {
+		upgrade:'websocket',
+		connection:'upgrade',
+		host:host,
+        'sec-websocket-version':'8',
+        'sec-websocket-key':key
+	});
+
+	var answer = challenge(key);
+
+	client.on('upgrade', function(request, connection, head) {
+		if (request.headers['sec-websocket-accept'] !== answer) {
+			connection.destroy();
+			ws.emit('close');
+			return;
+		}
+		ws.onconnection(connection, head);
+	});
+
+	request.end();
+	return ws;
+};
+var handshake8 = function(request, connection) {
+	var headers = [
+		'HTTP/1.1 101 Web Socket Protocol Handshake', 
+		'Upgrade: websocket', 
+		'Connection: Upgrade',
+		'Sec-WebSocket-Accept: '+challenge(request.headers['sec-websocket-key'])
+	];
+
+	connection.write(headers.join('\r\n')+'\r\n\r\n', 'ascii');
+	return protocol8.create({type:'server'});
+};
+
+
 exports.connect = function(host, options) {
 	var port = parseInt(host.split(':')[1] || 80, 10);
 	var hostname = host.split(':')[0];
 	var client = http.createClient(port, hostname);
-	var ws;
 
 	options = options || {};
 
-	if (typeof options.protocol === 'number' && options.protocol < 6) {
-		ws = protocol0.create({type:'client'});
-		
-		var request = client.request('/', {
-			upgrade:'websocket',
-			connection:'upgrade',
-			host:host,
-	        'sec-websocket-key1':'4 @1  46546xW%0l 1 5',
-	        'sec-websocket-key2':'12998 5 Y3 1  .P00'
-		});
-
-		client.on('upgrade', function(request, connection, head) {
-			ws.onconnection(connection);
-		});
-
-		request.end('^n:ds[4U', 'ascii');
-	} else {
-		var key = new Buffer(16);
-	
-		for (var i = 0; i < key.length; i++) {
-			key[i] = (Math.random()*0xff) | 0;		
-		}
-
-		key = key.toString('base64');
-
-		ws = protocol8.create({mask:true, type:'client'});
-		
-		var request = client.request('/', {
-			upgrade:'websocket',
-			connection:'upgrade',
-			host:host,
-	        'sec-websocket-version':'8',
-	        'sec-websocket-key':key
-		});
-
-		var answer = challenge(key);
-
-		client.on('upgrade', function(request, connection, head) {
-			if (request.headers['sec-websocket-accept'] !== answer) {
-				connection.destroy();
-				ws.emit('close');
-				return;
-			}
-			ws.onconnection(connection, head);
-		});
-
-		request.end();
-	}
-
-	return ws;
+	return ((typeof options.protocol === 'number' && options.protocol < 6) ? client0 : client8)(client, host);
 };
 exports.listen = function(port, onsocket, callback) {
 	var that = common.createEmitter();
@@ -95,41 +131,15 @@ exports.listen = function(port, onsocket, callback) {
 	}
 
 	server.on('upgrade', function(request, connection, head) {
-		var ws;
-
 		connection.setNoDelay(true);
 
-		if (request.headers['sec-websocket-key']) {
-			ws = protocol8.create({type:'server'});
+		var ws = (request.headers['sec-websocket-key'] ? handshake8 : handshake0)(request, connection, head);
 
-			connection.write([
-				'HTTP/1.1 101 Web Socket Protocol Handshake', 
-				'Upgrade: websocket', 
-				'Connection: Upgrade',
-				'Sec-WebSocket-Accept: '+challenge(request.headers['sec-websocket-key'])
-			].join('\r\n')+'\r\n\r\n', 'ascii');			
-		} else {
-			var sec = ('sec-websocket-key1' in request.headers) ? 'Sec-' : '';
-			var token = sign(request.headers['sec-websocket-key1'], request.headers['sec-websocket-key2'], head);
-
-			if (sec && !token) {
-				connection.destroy();
-				return;
-			}
-
-			ws = protocol0.create({type:'server'});
-
-			connection.write([
-				'HTTP/1.1 101 Web Socket Protocol Handshake', 
-				'Upgrade: WebSocket', 
-				'Connection: Upgrade',
-				sec+'WebSocket-Origin: ' + request.headers.origin || 'null',
-				sec+'WebSocket-Location: ws://' + request.headers.host + request.url
-			].join('\r\n')+'\r\n\r\n'+token, 'binary');
+		if (!ws) {
+			return;
 		}
 
 		ws.onconnection(connection, head);
-
 		that.emit('socket', ws);
 	});
 
