@@ -41,6 +41,7 @@ var WebSocket = common.emitter(function(options) {
 	this.type = options.type;
 });
 
+WebSocket.prototype.pingable = false;
 WebSocket.prototype.version = 0;
 
 WebSocket.prototype.onconnection = function(connection) {

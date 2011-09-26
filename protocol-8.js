@@ -49,7 +49,9 @@ var WebSocket = common.emitter(function(options) {
 	this.type = options.type;
 });
 
+WebSocket.prototype.pingable = true;
 WebSocket.prototype.version = 8;
+
 WebSocket.prototype.onconnection = function(connection, head) {
 	var self = this;
 	var list = buffers.create();
