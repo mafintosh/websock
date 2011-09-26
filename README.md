@@ -1,19 +1,19 @@
-# WebSockets
+# WebSock
 a websocket server and client module
 
-this module implements the websocket spec 0-12. it's easy to use:
+this module implements the websocket spec 0-12 (which means it supports ALL websockets as of 01/10/11). it's easy to use:
 
 ``` js
-var websockets = require('websockets');
+var websock = require('websock');
 
 // instead of 80 we could also parse a server to listen to
-websockets.listen(80, function(socket) {
+websock.listen(80, function(socket) {
 	socket.on('message', function(message) {
 		socket.send('echo: ' + message); // let's echo it
 	});
 	socket.send('hello from server');
 }, function() {
-	var socket = websockets.connect('localhost');
+	var socket = websock.connect('localhost');
 
 	socket.on('open', function() {
 		// yay open!
