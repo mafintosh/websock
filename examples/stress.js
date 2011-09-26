@@ -1,4 +1,4 @@
-var websockets = require('./index');
+var websockets = require('../index');
 
 websockets.listen(10000, function(socket) {
 	socket.on('message', function(message) {
@@ -7,7 +7,7 @@ websockets.listen(10000, function(socket) {
 }, function() {
 	var ws = websockets.connect('localhost:10000', {protocol:8});
 	var now = Date.now();
-	var max = 10000000;
+	var max = 1000000;
 
 	ws.on('open', function() {
 		for (var i = 0; i < max; i++) {

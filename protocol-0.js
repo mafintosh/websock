@@ -5,19 +5,39 @@ var noop = function() {};
 var START = '\u0000';
 var END   = '\ufffd';
 
+var CLOSE = [END, END, START];
+
 var Parser = common.emitter(function() {
 	this.buffer = '';
 	this.start = 0;
 	this.framing = false;
 	this.top = [];
+
+	this.once = common.once();
+	this.pointer = 0;
 });
 
 Parser.prototype.parse = function(data) {
 	var index = -1;
 	var last = 0;
 	
-	this.top[0] = data[data.length-2] || this.top[1];
-	this.top[1] = data[data.length-1];
+	if (this.once() && data === END+START) {
+		this.emit('close');
+	}
+	if (!this.once()) {
+		for (var i = 0; i < data.length; i++) {
+			if (CLOSE[this.pointer++] === data[i]) {
+				if (this.pointer === CLOSE.length) {
+					this.emit('close');
+				}
+			} else {
+				this.pointer = 0;
+			}
+		}
+	}
+
+//	this.top[0] = data[data.length-2] || this.top[1];
+//	this.top[1] = data[data.length-1];
 
 	while ((index = data.indexOf(this.framing ? END : START, last)) > -1) { // messages are framed by START/END
 		if (this.framing) {
@@ -28,10 +48,13 @@ Parser.prototype.parse = function(data) {
 		this.start = last = index+1;
 		this.framing = !this.framing;
 	}
-	if (!this.framing && this.top[0] === END && this.top[1] === START) { // websocket close handshake
-		this.emit('close');
-		return;
-	}
+//	if (this.top[0] === END && this.top[1] === START) {
+//		console.log('should maybe close?')
+//	}
+//	if (!this.framing && this.top[0] === END && this.top[1] === START) { // websocket close handshake
+//		this.emit('close');
+//		return;
+//	}
 	if (this.framing && last <= data.length) { // we only buffer is we absolutely have to
 		this.buffer += data;
 	}

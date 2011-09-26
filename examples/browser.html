@@ -2,21 +2,29 @@
 <head>
 	<title>hello websocket world</title>
 	<script>
-		var ws = new WebSocket('ws://localhost:10000');
+		window.onload = function() {
+			var ws = new WebSocket('ws://192.168.2.148:54321');
+			var pre = document.getElementsByTagName('pre')[0];
 
-		ws.onopen = function() {
-			ws.send('hello world world world world world world world world world world world world world world world world world world world world world world');
-		};
-		ws.onmessage = function(e) {
-			console.log('rcvd', e.data);
-			ws.close();
-		};
-		ws.onclose = function() {
-			console.log('imma closing');
+			var log = function(str) {
+				pre.innerHTML += str + '<br>';
+			};
+
+			ws.onopen = function() {
+				ws.send('hello world world world world world world world world world world world world world world world world world world world world world world');
+			};
+			ws.onmessage = function(e) {
+				log('rcvd ' + e.data);
+				ws.close();
+			};
+			ws.onclose = function() {
+				log('imma closing');
+			};
 		};
 	</script>
 </head>
 <body>
-	<h1>gogo console</h1>
+	<h1>gogo websockets!</h1>
+	<pre></pre>
 </body>
 </html>
