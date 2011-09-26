@@ -4,10 +4,13 @@ websockets.listen(10000, function(socket) {
 	socket.on('message', function(message) {
 		socket.send(message);
 	});
+	socket.on('close', function() {
+		console.log('server', 'close');
+	});
 }, function() {
 	var ws = websockets.connect('localhost:10000', {protocol:8});
 	var now = Date.now();
-	var max = 1000000;
+	var max = 100000;
 
 	ws.on('open', function() {
 		for (var i = 0; i < max; i++) {
@@ -25,7 +28,7 @@ websockets.listen(10000, function(socket) {
 			var delta = Date.now() - now;
 
 			console.log(delta+'ms', Math.round(1000*max/delta)+'msg/s');
-			process.exit(0);
+//			process.exit(0);
 		}
 	});
 	ws.on('close', function() {
