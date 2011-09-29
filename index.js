@@ -4,6 +4,8 @@ var common = require('common');
 var protocol8 = require('./protocol-8');
 var protocol0 = require('./protocol-0');
 
+var noop = function() {};
+
 var challenge = function(key) {
 	return crypto.createHash('sha1').update(key+'258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
 };
