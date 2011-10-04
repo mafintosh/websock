@@ -10,7 +10,7 @@ websockets.listen(10000, function(socket) {
 }, function() {
 	var ws = websockets.connect('localhost:10000', {protocol:8});
 	var now = Date.now();
-	var max = 100000;
+	var max = 10000;
 
 	ws.on('open', function() {
 		for (var i = 0; i < max; i++) {

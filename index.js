@@ -123,6 +123,7 @@ exports.connect = function(host, options) {
 exports.listen = function(port, onsocket, callback) {
 	var that = common.createEmitter();
 	var server = port;
+	var protocols = {};
 
 	if (typeof port === 'number') {
 		server = http.createServer();
@@ -132,10 +133,19 @@ exports.listen = function(port, onsocket, callback) {
 		server = server.server;
 	}
 
+	that.upgrade = function(name, handshake) {
+		protocols[name] = handshake;
+	};
+
+	that.upgrade('websocket', function(request, head, connection) {
+		return (request.headers['sec-websocket-key'] ? handshake8 : handshake0)(request, connection, head);
+	});
+
 	server.on('upgrade', function(request, connection, head) {
 		connection.setNoDelay(true);
 
-		var ws = (request.headers['sec-websocket-key'] ? handshake8 : handshake0)(request, connection, head);
+		var protocol = (request.headers.upgrade || '').toLowerCase();
+		var ws = (protocols[protocol] || noop)(request, head, connection);
 
 		if (!ws) {
 			return;
