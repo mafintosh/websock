@@ -120,6 +120,20 @@ exports.connect = function(host, options) {
 
 	return ((typeof options.protocol === 'number' && options.protocol < 6) ? client0 : client8)(client, host);
 };
+exports.onupgrade = function(onsocket) { // exposing this to make for more dynamic use of websock
+	return function(request, connection, head) {
+		connection.setNoDelay(true);
+
+		var ws = (request.headers['sec-websocket-key'] ? handshake8 : handshake0)(request, connection, head);
+
+		if (!ws) {
+			return;
+		}
+
+		ws.onconnection(connection, head);
+		onsocket(ws);
+	};
+};
 exports.listen = function(port, onsocket, callback) {
 	var that = common.createEmitter();
 	var server = port;
@@ -133,27 +147,9 @@ exports.listen = function(port, onsocket, callback) {
 		server = server.server;
 	}
 
-	that.upgrade = function(name, handshake) {
-		protocols[name] = handshake;
-	};
-
-	that.upgrade('websocket', function(request, head, connection) {
-		return (request.headers['sec-websocket-key'] ? handshake8 : handshake0)(request, connection, head);
-	});
-
-	server.on('upgrade', function(request, connection, head) {
-		connection.setNoDelay(true);
-
-		var protocol = (request.headers.upgrade || '').toLowerCase();
-		var ws = (protocols[protocol] || noop)(request, head, connection);
-
-		if (!ws) {
-			return;
-		}
-
-		ws.onconnection(connection, head);
-		that.emit('socket', ws);
-	});
+	server.on('upgrade', exports.onupgrade(function(socket) {
+		that.emit('socket', socket);
+	}));
 
 	if (onsocket) {
 		that.on('socket', onsocket);
