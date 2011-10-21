@@ -53,7 +53,7 @@ var handshake0 = function(request, connection, head) {
 	}
 
 	var handshake = [
-		'HTTP/1.1 101 Web Socket Protocol Handshake', 
+		'HTTP/1.1 101 WebSocket Protocol Handshake', 
 		'Upgrade: WebSocket', 
 		'Connection: Upgrade',
 		sec+'WebSocket-Origin: ' + (request.headers.origin || 'null'),
