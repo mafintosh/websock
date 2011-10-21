@@ -56,7 +56,7 @@ var handshake0 = function(request, connection, head) {
 		'HTTP/1.1 101 Web Socket Protocol Handshake', 
 		'Upgrade: WebSocket', 
 		'Connection: Upgrade',
-		sec+'WebSocket-Origin: ' + request.headers.origin || 'null',
+		sec+'WebSocket-Origin: ' + (request.headers.origin || 'null'),
 		sec+'WebSocket-Location: ws://' + request.headers.host + request.url
 	];
 
