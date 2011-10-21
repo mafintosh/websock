@@ -1,4 +1,5 @@
 var http = require('http');
+var parseURL = require('url').parse;
 var crypto = require('crypto');
 var common = require('common');
 var protocol8 = require('./protocol-8');
@@ -107,8 +108,15 @@ var handshake8 = function(request, connection) {
 exports.connect = function(host, options) {
 	options = options || {};
 
-	var port = parseInt(host.split(':')[1] || 80, 10);
-	var hostname = host.split(':')[0];
+	if (typeof host === 'string' && host.indexOf('://') === -1) {
+		host = 'ws://'+host;
+	}
+	if (typeof host === 'string') {
+		host = parseURL(host);
+	}
+
+	var port = parseInt(host.port || 80, 10);
+	var hostname = host.hostname;
 	var request = {
 		agent: false,
 		port: port,
@@ -116,7 +124,7 @@ exports.connect = function(host, options) {
 		headers: {
 			Connection:'Upgrade',
 			Upgrade:'websocket',
-			Host:hostname+(port !== 80 ? ':'+port : ''),
+			Host:host.hostname
 		}
 	};
 

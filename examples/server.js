@@ -10,7 +10,7 @@ websock.listen(54321, function(socket) {
 		console.log('closed server socket');
 	});
 }, function() {
-	var socket = websock.connect('localhost:54321', {protocol:8});
+	var socket = websock.connect('ws://localhost:54321', {protocol:8});
 
 	socket.on('open', function() {
 		socket.send('from node');
