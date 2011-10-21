@@ -105,6 +105,8 @@ var handshake8 = function(request, connection) {
 
 
 exports.connect = function(host, options) {
+	options = options || {};
+
 	var port = parseInt(host.split(':')[1] || 80, 10);
 	var hostname = host.split(':')[0];
 	var request = {
