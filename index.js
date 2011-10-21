@@ -25,21 +25,18 @@ var sign = function(k1, k2, head) {
 	return md5.update(head.toString('binary')).digest('binary');
 };
 
-var client0 = function(client, host) {
+var client0 = function(options) {
 	var ws = protocol0.create({type:'client'});
 	
-	// TODO: DONT HARDCODE HANDSHAKE!	
-	var request = client.request('/', {
-		upgrade:'websocket',
-		connection:'upgrade',
-		host:host,
-		'sec-websocket-key1':'4 @1  46546xW%0l 1 5',
-		'sec-websocket-key2':'12998 5 Y3 1  .P00'
-	});
+	// TODO: DONT HARDCODE HANDSHAKE!
+	options.headers['sec-websocket-key1'] = '4 @1  46546xW%0l 1 5';
+	options.headers['sec-websocket-key2'] = '12998 5 Y3 1  .P00';
 
-	client.on('upgrade', function(request, connection, head) {
+	var request = http.request(options);
+
+	request.on('upgrade', function(request, connection, head) {
 		// TODO: CHECK HANDSHAKE!
-		ws.onconnection(connection);
+		ws.open(connection);
 	});
 
 	request.end('^n:ds[4U', 'ascii');
@@ -66,7 +63,7 @@ var handshake0 = function(request, connection, head) {
 	return protocol0.create({type:'server'});
 };
 
-var client8 = function(client, host) {
+var client8 = function(options) {
 	var ws = protocol8.create({mask:true, type:'client'});
 	var key = new Buffer(16);
 
@@ -75,32 +72,28 @@ var client8 = function(client, host) {
 	}
 
 	key = key.toString('base64');
-	
-	var request = client.request('/', {
-		upgrade:'websocket',
-		connection:'upgrade',
-		host:host,
-		'sec-websocket-version':'8',
-		'sec-websocket-key':key
-	});
 
+	options.headers['sec-websocket-version'] = '8';
+	options.headers['sec-websocket-key'] = key;
+
+	var request = http.request(options);
 	var answer = challenge(key);
 
-	client.on('upgrade', function(request, connection, head) {
+	request.on('upgrade', function(request, connection, head) {
 		if (request.headers['sec-websocket-accept'] !== answer) {
 			connection.destroy();
 			ws.emit('close');
 			return;
 		}
-		ws.onconnection(connection, head);
+		ws.open(connection, head);
 	});
-
 	request.end();
+
 	return ws;
 };
 var handshake8 = function(request, connection) {
 	var headers = [
-		'HTTP/1.1 101 Web Socket Protocol Handshake', 
+		'HTTP/1.1 101 Swiching Protocols', 
 		'Upgrade: websocket', 
 		'Connection: Upgrade',
 		'Sec-WebSocket-Accept: '+challenge(request.headers['sec-websocket-key'])
@@ -114,11 +107,18 @@ var handshake8 = function(request, connection) {
 exports.connect = function(host, options) {
 	var port = parseInt(host.split(':')[1] || 80, 10);
 	var hostname = host.split(':')[0];
-	var client = http.createClient(port, hostname);
+	var request = {
+		agent: false,
+		port: port,
+		host: hostname,
+		headers: {
+			Connection:'Upgrade',
+			Upgrade:'websocket',
+			Host:hostname+(port !== 80 ? ':'+port : ''),
+		}
+	};
 
-	options = options || {};
-
-	return ((typeof options.protocol === 'number' && options.protocol < 6) ? client0 : client8)(client, host);
+	return ((typeof options.protocol === 'number' && options.protocol < 6) ? client0 : client8)(request);
 };
 exports.onupgrade = function(onsocket) { // exposing this to make for more dynamic use of websock
 	return function(request, connection, head) {
@@ -130,8 +130,11 @@ exports.onupgrade = function(onsocket) { // exposing this to make for more dynam
 			return;
 		}
 
-		ws.onconnection(connection, head);
-		onsocket(ws);
+		ws.once('open', function() {
+			onsocket(ws);
+		});
+
+		ws.open(connection, head);
 	};
 };
 exports.listen = function(port, onsocket, callback) {

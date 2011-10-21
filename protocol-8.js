@@ -47,19 +47,18 @@ var CLOSE = new Buffer([136,0]);
 var WebSocket = common.emitter(function(options) {
 	this.masking = options.mask;
 	this.type = options.type;
+	this.writable = this.readable = false;
 });
 
 WebSocket.prototype.pingable = true;
 WebSocket.prototype.version = 8;
 
-WebSocket.prototype.onconnection = function(connection, head) {
+WebSocket.prototype.open = function(connection, head) {
 	var self = this;
 	var list = buffers.create();
 
-	this._closed = false;
-
 	this.connection = connection;
-	this.emit('open');
+	this.readable = this.writable = true;
 
 	var opcode;
 	var mask;
@@ -122,7 +121,7 @@ WebSocket.prototype.onconnection = function(connection, head) {
 				message[i] ^= mask[i % 4];
 			}
 		}
-		if (opcode === 8 && self._closed) {
+		if (opcode === 8 && !self.writable) {
 			return true;
 		}
 		if (opcode === 8) {
@@ -137,8 +136,9 @@ WebSocket.prototype.onconnection = function(connection, head) {
 		if (opcode === 10) {
 			return true;
 		}
-
-		self.emit('message', message.toString('utf-8'));
+		if (self.readable) {
+			self.emit('message', message.toString('utf-8'));		
+		}
 		parse = parseHead;
 	};
 	var parse = parseHead;
@@ -151,37 +151,40 @@ WebSocket.prototype.onconnection = function(connection, head) {
 
 	connection.on('end', function() {
 		connection.end(); // not sure about this when the server starts the closing handshake
+		self._onclose();
 	});
 	connection.on('close', function() {
-		self.emit('close');
+		self._onclose();
 	});
 	connection.on('data', ondata);
 
-	if (head && head.length) {
+	this.emit('open');
+
+	if (this.writable && head && head.length) {
 		ondata(head);
 	}
 };
 WebSocket.prototype.send = function(message) {
 	this.connection.write(encode(1, this.masking, new Buffer(message, 'utf-8')));
 };
-WebSocket.prototype.ping = function(interval) {
-	var self = this;
-
-	var id = setInterval(function() {
-		self.connection.write(PING);
-	}, interval || 60*1000);
-
-	this.on('close', function() {
-		clearInterval(id);
-	});
+WebSocket.prototype.ping = function() {
+	this.connection.write(PING);
 };
 WebSocket.prototype.close = WebSocket.prototype.end = function() {
-	this._closed = true;
 	this.connection.write(CLOSE);
+	this._onclose();
 };
 WebSocket.prototype.destroy = function() {
-	this._closed = true;
 	this.connection.destroy();
+	this._onclose();
+};
+
+WebSocket.prototype._onclose = function() {
+	if (!this.readable) {
+		return;
+	}
+	this.readable = this.writable = false;
+	this.emit('close');
 };
 
 exports.create = function(options) {

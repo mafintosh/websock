@@ -13,6 +13,8 @@ websockets.listen(10000, function(socket) {
 	var max = 10000;
 
 	ws.on('open', function() {
+		console.log('client','open');
+
 		for (var i = 0; i < max; i++) {
 			ws.send('hello world');
 		}

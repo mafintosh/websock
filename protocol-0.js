@@ -36,9 +36,6 @@ Parser.prototype.parse = function(data) {
 		}
 	}
 
-//	this.top[0] = data[data.length-2] || this.top[1];
-//	this.top[1] = data[data.length-1];
-
 	while ((index = data.indexOf(this.framing ? END : START, last)) > -1) { // messages are framed by START/END
 		if (this.framing) {
 			this.emit('message', this.buffer.substring(this.start)+data.substring(last, index));
@@ -48,13 +45,6 @@ Parser.prototype.parse = function(data) {
 		this.start = last = index+1;
 		this.framing = !this.framing;
 	}
-//	if (this.top[0] === END && this.top[1] === START) {
-//		console.log('should maybe close?')
-//	}
-//	if (!this.framing && this.top[0] === END && this.top[1] === START) { // websocket close handshake
-//		this.emit('close');
-//		return;
-//	}
 	if (this.framing && last <= data.length) { // we only buffer is we absolutely have to
 		this.buffer += data;
 	}
@@ -62,17 +52,18 @@ Parser.prototype.parse = function(data) {
 
 var WebSocket = common.emitter(function(options) {
 	this.type = options.type;
+	this.readable = this.writable = false;
 });
 
 WebSocket.prototype.pingable = false;
 WebSocket.prototype.version = 0;
 
-WebSocket.prototype.onconnection = function(connection) {
+WebSocket.prototype.open = function(connection, head) {
 	var self = this;
 	var parser = new Parser();
 	
 	this.connection = connection;
-	this.emit('open');
+	this.readable = this.writable = true;
 
 	connection.setEncoding('utf-8');
 	connection.setTimeout(2*60*1000);
@@ -81,16 +72,20 @@ WebSocket.prototype.onconnection = function(connection) {
 		connection.destroy();
 	};
 	var onclose = common.once(function() {
+		self.readable = self.writable = false;
 		self.emit('close');
 	});	
 
 	parser.on('message', function(message) {
-		self.emit('message', message);
+		if (self.readable) {
+			self.emit('message', message);		
+		}
 	});
 	parser.on('close', destroy);	
 
 	connection.on('end', function() {
 		connection.end();
+		onclose();
 	});
 
 	connection.on('timeout', destroy);	
@@ -99,7 +94,11 @@ WebSocket.prototype.onconnection = function(connection) {
 	
 	connection.on('data', function(data) {
 		parser.parse(data);
-	});	
+	});
+
+	this.emit('open');
+
+	// maybe do something with head?
 };
 
 WebSocket.prototype.send = function(data) {
