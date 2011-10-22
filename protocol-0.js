@@ -53,6 +53,8 @@ Parser.prototype.parse = function(data) {
 var WebSocket = common.emitter(function(options) {
 	this.type = options.type;
 	this.readable = this.writable = false;
+	this.connection = null;
+	this.address = null;
 });
 
 WebSocket.prototype.pingable = false;
@@ -64,9 +66,9 @@ WebSocket.prototype.open = function(connection, head) {
 	
 	this.connection = connection;
 	this.readable = this.writable = true;
+	this.address = connection.remoteAddress;
 
 	connection.setEncoding('utf-8');
-	connection.setTimeout(2*60*1000);
 		
 	var destroy = function() {
 		connection.destroy();
@@ -88,7 +90,6 @@ WebSocket.prototype.open = function(connection, head) {
 		onclose();
 	});
 
-	connection.on('timeout', destroy);	
 	connection.on('error', onclose);
 	connection.on('close', onclose);
 	

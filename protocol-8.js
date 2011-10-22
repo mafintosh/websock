@@ -48,6 +48,7 @@ var WebSocket = common.emitter(function(options) {
 	this.masking = options.mask;
 	this.type = options.type;
 	this.writable = this.readable = false;
+	this.connection = null;
 });
 
 WebSocket.prototype.pingable = true;
@@ -59,6 +60,7 @@ WebSocket.prototype.open = function(connection, head) {
 
 	this.connection = connection;
 	this.readable = this.writable = true;
+	this.address = connection.remoteAddress;
 
 	var opcode;
 	var mask;
