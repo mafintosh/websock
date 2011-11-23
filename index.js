@@ -1,4 +1,5 @@
 var http = require('http');
+var https = require('https');
 var parseURL = require('url').parse;
 var crypto = require('crypto');
 var common = require('common');
@@ -26,14 +27,14 @@ var sign = function(k1, k2, head) {
 	return md5.update(head.toString('binary')).digest('binary');
 };
 
-var client0 = function(options) {
+var client0 = function(options, lib) {
 	var ws = protocol0.create({type:'client'});
 	
 	// TODO: DONT HARDCODE HANDSHAKE!
 	options.headers['sec-websocket-key1'] = '4 @1  46546xW%0l 1 5';
 	options.headers['sec-websocket-key2'] = '12998 5 Y3 1  .P00';
 
-	var request = http.request(options);
+	var request = lib.request(options);
 
 	request.on('upgrade', function(request, connection, head) {
 		// TODO: CHECK HANDSHAKE!
@@ -64,7 +65,7 @@ var handshake0 = function(request, connection, head) {
 	return protocol0.create({type:'server'});
 };
 
-var client8 = function(options) {
+var client8 = function(options, lib) {
 	var ws = protocol8.create({mask:true, type:'client'});
 	var key = new Buffer(16);
 
@@ -77,7 +78,7 @@ var client8 = function(options) {
 	options.headers['sec-websocket-version'] = '8';
 	options.headers['sec-websocket-key'] = key;
 
-	var request = http.request(options);
+	var request = lib.request(options);
 	var answer = challenge(key);
 
 	request.on('upgrade', function(request, connection, head) {
@@ -115,7 +116,8 @@ exports.connect = function(host, options) {
 		host = parseURL(host);
 	}
 
-	var port = parseInt(host.port || 80, 10);
+	var ssl = host.protocol === 'wss:';
+	var port = parseInt(host.port || (ssl ? 443 : 80), 10);
 	var hostname = host.hostname;
 	var request = {
 		agent: false,
@@ -128,7 +130,7 @@ exports.connect = function(host, options) {
 		}
 	};
 
-	return ((typeof options.protocol === 'number' && options.protocol < 6) ? client0 : client8)(request);
+	return ((typeof options.protocol === 'number' && options.protocol < 6) ? client0 : client8)(request, ssl ? https : http);
 };
 exports.onupgrade = function(onsocket) { // exposing this to make for more dynamic use of websock
 	return function(request, connection, head) {
