@@ -123,6 +123,7 @@ exports.connect = function(host, options) {
 		agent: false,
 		port: port,
 		host: hostname,
+		path: host.path,
 		headers: {
 			Connection:'Upgrade',
 			Upgrade:'websocket',
@@ -133,7 +134,7 @@ exports.connect = function(host, options) {
 	return ((typeof options.protocol === 'number' && options.protocol < 6) ? client0 : client8)(request, ssl ? https : http);
 };
 exports.onupgrade = function(onsocket) { // exposing this to make for more dynamic use of websock
-	return function(request, connection, head) {
+	return function(request, connection, head, a, b) {
 		connection.setNoDelay(true);
 
 		var ws = (request.headers['sec-websocket-key'] ? handshake8 : handshake0)(request, connection, head);
@@ -143,7 +144,7 @@ exports.onupgrade = function(onsocket) { // exposing this to make for more dynam
 		}
 
 		ws.once('open', function() {
-			onsocket(ws);
+			onsocket(ws, a, b);
 		});
 
 		ws.open(connection, head);
