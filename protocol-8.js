@@ -49,12 +49,19 @@ var WebSocket = common.emitter(function(options) {
 	this.type = options.type;
 	this.writable = this.readable = false;
 	this.connection = null;
+
+	this._destroyed = false;
 });
 
 WebSocket.prototype.pingable = true;
 WebSocket.prototype.version = 8;
 
 WebSocket.prototype.open = function(connection, head) {
+	if (this._destroyed) {
+		connection.destroy();
+		return;
+	}
+
 	var self = this;
 	var list = buffers.create();
 
@@ -173,14 +180,32 @@ WebSocket.prototype.ping = function() {
 	this.connection.write(PING);
 };
 WebSocket.prototype.close = WebSocket.prototype.end = function() {
+	if (this._preclose()) {
+		return;
+	}
+
 	this.connection.write(CLOSE);
 	this._onclose();
 };
 WebSocket.prototype.destroy = function() {
+	if (this._preclose()) {
+		return;
+	}
+
 	this.connection.destroy();
 	this._onclose();
 };
 
+WebSocket.prototype._preclose = function() {
+	if (!this.connection) {
+		return false;
+	}
+
+	this._destroyed = false;
+	this.emit('close');	
+
+	return true;
+};
 WebSocket.prototype._onclose = function() {
 	if (!this.readable) {
 		return;

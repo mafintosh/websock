@@ -55,6 +55,8 @@ var WebSocket = common.emitter(function(options) {
 	this.readable = this.writable = false;
 	this.connection = null;
 	this.address = null;
+
+	this._destroyed = false;
 });
 
 WebSocket.prototype.pingable = false;
@@ -64,6 +66,11 @@ WebSocket.prototype.open = function(connection, head) {
 	var self = this;
 	var parser = new Parser();
 	
+	if (this._destroyed) {
+		connection.destroy();
+		return;
+	}
+
 	this.connection = connection;
 	this.readable = this.writable = true;
 	this.address = connection.remoteAddress;
@@ -114,10 +121,29 @@ WebSocket.prototype.send = function(data) {
 }
 WebSocket.prototype.ping = noop;
 WebSocket.prototype.end = WebSocket.prototype.close = function() {
+	if (this._preclose()) {
+		return;	
+	}
+
 	this.connection.end();
 };
 WebSocket.prototype.destroy = function() {
+	if (this._preclose()) {
+		return;	
+	}
+	
 	this.connection.destroy();
+};
+
+WebSocket.prototype._preclose = function() {
+	if (!this.connection) {
+		return false;
+	}
+
+	this._destroyed = false;
+	this.emit('close');	
+
+	return true;	
 };
 
 exports.create = function(options) {

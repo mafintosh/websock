@@ -40,8 +40,12 @@ var client0 = function(options, lib) {
 		// TODO: CHECK HANDSHAKE!
 		ws.open(connection);
 	});
+	request.on('error', function() {
+		ws.destroy();
+	});
 
 	request.end('^n:ds[4U', 'ascii');
+	
 	return ws;
 };
 var handshake0 = function(request, connection, head) {
@@ -62,6 +66,7 @@ var handshake0 = function(request, connection, head) {
 	];
 
 	connection.write(handshake.join('\r\n')+'\r\n\r\n'+token, 'binary');
+
 	return protocol0.create({type:'server'});
 };
 
@@ -87,8 +92,13 @@ var client8 = function(options, lib) {
 			ws.emit('close');
 			return;
 		}
+
 		ws.open(connection, head);
 	});
+	request.on('error', function() {
+		ws.destroy();
+	});
+	
 	request.end();
 
 	return ws;
@@ -102,6 +112,7 @@ var handshake8 = function(request, connection) {
 	];
 
 	connection.write(headers.join('\r\n')+'\r\n\r\n', 'ascii');
+
 	return protocol8.create({type:'server'});
 };
 
