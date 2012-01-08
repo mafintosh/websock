@@ -136,7 +136,7 @@ WebSocket.prototype.destroy = function() {
 };
 
 WebSocket.prototype._preclose = function() {
-	if (!this.connection) {
+	if (this.connection) {
 		return false;
 	}
 

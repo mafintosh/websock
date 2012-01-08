@@ -196,8 +196,15 @@ WebSocket.prototype.destroy = function() {
 	this._onclose();
 };
 
+WebSocket.prototype._onclose = function() {
+	if (!this.readable) {
+		return;
+	}
+	this.readable = this.writable = false;
+	this.emit('close');
+};
 WebSocket.prototype._preclose = function() {
-	if (!this.connection) {
+	if (this.connection) {
 		return false;
 	}
 
@@ -205,13 +212,6 @@ WebSocket.prototype._preclose = function() {
 	this.emit('close');	
 
 	return true;
-};
-WebSocket.prototype._onclose = function() {
-	if (!this.readable) {
-		return;
-	}
-	this.readable = this.writable = false;
-	this.emit('close');
 };
 
 exports.create = function(options) {
