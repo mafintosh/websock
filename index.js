@@ -62,7 +62,7 @@ var handshake0 = function(request, connection, head) {
 		'Upgrade: WebSocket', 
 		'Connection: Upgrade',
 		sec+'WebSocket-Origin: ' + (request.headers.origin || 'null'),
-		sec+'WebSocket-Location: '+(connection.encrypted ? 'ws' : 'wss')+'://' + request.headers.host + request.url
+		sec+'WebSocket-Location: '+(connection.encrypted ? 'wss' : 'ws')+'://' + request.headers.host + request.url
 	];
 
 	connection.write(handshake.join('\r\n')+'\r\n\r\n'+token, 'binary');
