@@ -175,6 +175,16 @@ exports.listen = function(port, onsocket, callback) {
 	}
 
 	server.on('upgrade', exports.onupgrade(function(socket) {
+		if (socket.pingable) {
+			var ping = setInterval(function() {
+				socket.ping();
+			}, 60*1000);
+
+			socket.on('close', function() {
+				clearInterval(ping);
+			});
+		}
+
 		that.emit('socket', socket);
 	}));
 
