@@ -18,6 +18,7 @@ websockets.listen(10000, function(socket) {
 		for (var i = 0; i < max; i++) {
 			ws.send('hello world');
 		}
+
 	});
 
 	var rcvd = 0;
@@ -30,7 +31,7 @@ websockets.listen(10000, function(socket) {
 			var delta = Date.now() - now;
 
 			console.log(delta+'ms', Math.round(1000*max/delta)+'msg/s');
-//			process.exit(0);
+			ws.end();
 		}
 	});
 	ws.on('close', function() {

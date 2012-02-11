@@ -123,6 +123,7 @@ WebSocket.prototype.open = function(connection, head) {
 		if (list.length < length) {
 			return true;
 		}
+
 		var message = list.empty(length);
 
 		if (mask) {
@@ -138,20 +139,23 @@ WebSocket.prototype.open = function(connection, head) {
 			connection.end();
 			return true;
 		}
+
+		parse = parseHead;
+
 		if (opcode === 9) {
 			connection.write(encode(10, false, message));
-			return true;
-		}
+			return;
+		} 
 		if (opcode === 10) {
-			return true;
+			return;
 		}
-		if (self.readable) {
-			self.emit('message', message.toString('utf-8'));		
+		if (!self.readable) {
+			return;
 		}
-		parse = parseHead;
+
+		self.emit('message', message.toString('utf-8'));		
 	};
 	var parse = parseHead;
-
 	var ondata = function(data) {
 		list.push(data);
 
