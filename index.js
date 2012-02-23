@@ -50,7 +50,13 @@ var client0 = function(options, lib) {
 };
 var handshake0 = function(request, connection, head) {
 	var sec = ('sec-websocket-key1' in request.headers) ? 'Sec-' : '';
-	var token = sign(request.headers['sec-websocket-key1'], request.headers['sec-websocket-key2'], head);
+
+	if (sec && !(request.headers['sec-websocket-key1'] && request.headers['sec-websocket-key2'])) {
+		connection.destroy();
+		return;
+	}
+
+	var token = sec && sign(request.headers['sec-websocket-key1'], request.headers['sec-websocket-key2'], head);
 
 	if (sec && !token) {
 		connection.destroy();
