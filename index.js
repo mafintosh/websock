@@ -71,6 +71,10 @@ var handshake0 = function(request, connection, head) {
 		sec+'WebSocket-Location: '+(connection.encrypted ? 'wss' : 'ws')+'://' + request.headers.host + request.url
 	];
 
+	if (!connection.writable) {
+		return;
+	}
+
 	connection.write(handshake.join('\r\n')+'\r\n\r\n'+token, 'binary');
 
 	return protocol0.create({type:'server'});
@@ -116,6 +120,10 @@ var handshake8 = function(request, connection) {
 		'Connection: Upgrade',
 		'Sec-WebSocket-Accept: '+challenge(request.headers['sec-websocket-key'])
 	];
+
+	if (!connection.writable) {
+		return;
+	}
 
 	connection.write(headers.join('\r\n')+'\r\n\r\n', 'ascii');
 
