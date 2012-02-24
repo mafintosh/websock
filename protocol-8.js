@@ -125,13 +125,14 @@ WebSocket.prototype.open = function(connection, head) {
 		}
 
 		var message = list.empty(length);
+		var writable = self.writable && connection.writable;
 
 		if (mask) {
 			for (var i = 0; i < message.length; i++) {
 				message[i] ^= mask[i % 4];
 			}
 		}
-		if (opcode === 8 && !self.writable) {
+		if (opcode === 8 && !writable) {
 			return true;
 		}
 		if (opcode === 8) {
@@ -142,24 +143,24 @@ WebSocket.prototype.open = function(connection, head) {
 
 		parse = parseHead;
 
+		if (opcode === 9 && !writable) {
+			return;
+		}
 		if (opcode === 9) {
-			connection.write(encode(10, false, message));
+			connection.write(encode(10, false, message));			
 			return;
 		} 
 		if (opcode === 10) {
 			return;
 		}
-		if (!self.readable) {
-			return;
-		}
 
-		self.emit('message', message.toString('utf-8'));		
+		self.emit('message', message.toString('utf-8'));
 	};
 	var parse = parseHead;
 	var ondata = function(data) {
 		list.push(data);
 
-		while (!parse(data));
+		while (self.readable && !parse(data));
 	};
 
 	connection.on('end', function() {
