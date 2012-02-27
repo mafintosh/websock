@@ -61,6 +61,7 @@ var WebSocket = common.emitter(function(options) {
 
 WebSocket.prototype.pingable = false;
 WebSocket.prototype.version = 0;
+WebSocket.prototype.transport = 'websocket-0';
 
 WebSocket.prototype.open = function(connection, head) {
 	var self = this;

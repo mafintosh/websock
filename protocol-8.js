@@ -55,6 +55,7 @@ var WebSocket = common.emitter(function(options) {
 
 WebSocket.prototype.pingable = true;
 WebSocket.prototype.version = 8;
+WebSocket.prototype.transport = 'websocket-8';
 
 WebSocket.prototype.open = function(connection, head) {
 	if (this._destroyed) {
