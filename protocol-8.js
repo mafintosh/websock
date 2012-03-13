@@ -137,7 +137,9 @@ WebSocket.prototype.open = function(connection, head) {
 			return true;
 		}
 		if (opcode === 8) {
-			connection.write(CLOSE);
+			try {
+				connection.write(CLOSE);
+			} catch (e) {}
 			connection.end();
 			return true;
 		}
@@ -148,7 +150,11 @@ WebSocket.prototype.open = function(connection, head) {
 			return;
 		}
 		if (opcode === 9) {
-			connection.write(encode(10, false, message));			
+			try {
+				connection.write(encode(10, false, message));
+			} catch (e) {
+				connection.destroy();
+			}
 			return;
 		} 
 		if (opcode === 10) {
@@ -180,17 +186,29 @@ WebSocket.prototype.open = function(connection, head) {
 	}
 };
 WebSocket.prototype.send = function(message) {
-	this.connection.write(encode(1, this.masking, new Buffer(message, 'utf-8')));
+	try {
+		this.connection.write(encode(1, this.masking, new Buffer(message, 'utf-8')));
+	} catch (e) {
+		this.connection.destroy();
+		this._onclose();
+	}
 };
 WebSocket.prototype.ping = function() {
-	this.connection.write(PING);
+	try {
+		this.connection.write(PING);
+	} catch (e) {
+		this.connection.destroy();
+		this._conclose();
+	}
 };
 WebSocket.prototype.close = WebSocket.prototype.end = function() {
 	if (this._preclose()) {
 		return;
 	}
 
-	this.connection.write(CLOSE);
+	try {
+		this.connection.write(CLOSE);
+	} catch (e) {}
 	this._onclose();
 };
 WebSocket.prototype.destroy = function() {
