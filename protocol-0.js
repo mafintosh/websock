@@ -118,7 +118,11 @@ WebSocket.prototype.send = function(data) {
 	message.write(data, 1, 'utf-8');
 	message.write('\uffff', length+1, 'binary');
 
-	this.connection.write(message); // we encourage the socket to send it as one package
+	try {
+		this.connection.write(message); // we encourage the socket to send it as one package
+	} catch (e) {
+		this.destroy();
+	}
 }
 WebSocket.prototype.ping = noop;
 WebSocket.prototype.end = WebSocket.prototype.close = function() {

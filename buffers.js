@@ -52,7 +52,7 @@ BufferList.prototype.join = function() {
 BufferList.prototype.empty = function(length) {
 	var first = this._list[0];
 
-	if (length && (this._offset + length < first.length)) {
+	if (length && (this._offset + length < first.length) && (this._offset < this._offset + length)) {
 		var b = first.slice(this._offset, this._offset+length);
 
 		this._offset += length;

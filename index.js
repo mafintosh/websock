@@ -75,7 +75,11 @@ var handshake0 = function(request, connection, head) {
 		return;
 	}
 
-	connection.write(handshake.join('\r\n')+'\r\n\r\n'+token, 'binary');
+	try {
+		connection.write(handshake.join('\r\n')+'\r\n\r\n'+token, 'binary');
+	} catch (e) {
+		return;
+	}
 
 	return protocol0.create({type:'server'});
 };
