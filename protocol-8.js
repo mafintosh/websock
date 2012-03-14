@@ -198,7 +198,7 @@ WebSocket.prototype.ping = function() {
 		this.connection.write(PING);
 	} catch (e) {
 		this.connection.destroy();
-		this._conclose();
+		this._onclose();
 	}
 };
 WebSocket.prototype.close = WebSocket.prototype.end = function() {
