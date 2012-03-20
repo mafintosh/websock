@@ -125,7 +125,13 @@ WebSocket.prototype.open = function(connection, head) {
 			return true;
 		}
 
-		var message = list.empty(length);
+		try {
+			var message = list.empty(length);
+		} catch (e) {
+			connection.destroy();
+			return;
+		}
+		
 		var writable = self.writable && connection.writable;
 
 		if (mask) {
@@ -151,7 +157,7 @@ WebSocket.prototype.open = function(connection, head) {
 		}
 		if (opcode === 9) {
 			try {
-				connection.write(encode(10, false, message));
+				connection.write(encode(10, false, message));			
 			} catch (e) {
 				connection.destroy();
 			}
@@ -172,11 +178,23 @@ WebSocket.prototype.open = function(connection, head) {
 
 	connection.on('end', function() {
 		connection.end(); // not sure about this when the server starts the closing handshake
-		self._onclose();
+		self._onclose(); // not necessary?
 	});
+
 	connection.on('close', function() {
 		self._onclose();
 	});
+
+	connection.on('error', function() {
+		connection.destroy();
+		self._onclose(); // not necessary?
+	});
+
+	connection.on('timeout', function() {
+		connection.destroy();
+		self._onclose(); // not necessary?
+	});
+
 	connection.on('data', ondata);
 
 	this.emit('open');
@@ -190,7 +208,7 @@ WebSocket.prototype.send = function(message) {
 		this.connection.write(encode(1, this.masking, new Buffer(message, 'utf-8')));
 	} catch (e) {
 		this.connection.destroy();
-		this._onclose();
+		this._onclose(); // not necessary?
 	}
 };
 WebSocket.prototype.ping = function() {
@@ -198,7 +216,7 @@ WebSocket.prototype.ping = function() {
 		this.connection.write(PING);
 	} catch (e) {
 		this.connection.destroy();
-		this._onclose();
+		this._onclose(); // not necessary?
 	}
 };
 WebSocket.prototype.close = WebSocket.prototype.end = function() {
@@ -217,7 +235,7 @@ WebSocket.prototype.destroy = function() {
 	}
 
 	this.connection.destroy();
-	this._onclose();
+	this._onclose(); // not necessary?
 };
 
 WebSocket.prototype._onclose = function() {

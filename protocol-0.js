@@ -95,10 +95,19 @@ WebSocket.prototype.open = function(connection, head) {
 
 	connection.on('end', function() {
 		connection.end();
-		onclose();
+		onclose(); // not necessary?
 	});
 
-	connection.on('error', onclose);
+	connection.on('error', function() {
+		connection.destroy();
+		onclose(); // not necessary?
+	});
+
+	connection.on('timeout', function() {
+		connection.destroy();
+		onclose(); // not necessary?
+	});
+
 	connection.on('close', onclose);
 	
 	connection.on('data', function(data) {
