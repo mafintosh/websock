@@ -13,6 +13,7 @@ websock.listen(80, function(socket) {
 	});
 	socket.send('hello from server');
 }, function() {
+	//var socket = websock.connect('wss://self-signed-host', {agent: {rejectUnauthorized:false}});
 	var socket = websock.connect('localhost');
 
 	socket.on('open', function() {
