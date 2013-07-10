@@ -148,8 +148,9 @@ exports.connect = function(host, options) {
 	var ssl = host.protocol === 'wss:';
 	var port = parseInt(host.port || (ssl ? 443 : 80), 10);
 	var hostname = host.hostname;
+  var agent = options.agent ? new https.Agent(options.agent) : false
 	var request = {
-		agent: false,
+    agent: agent,
 		port: port,
 		host: hostname,
 		path: host.path,
